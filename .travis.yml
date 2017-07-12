@@ -1,0 +1,30 @@
+language: python
+env:
+  global:
+  - GITHUB_REPO=symbiote-h2020/Interpolator
+  - secure: g5gZYhqDG4U5OsmjW0KxkS7jQaABmrzWfrGGf5gdBwPoUPLAwNWahS5bkQmyOt8CqxoM01Ur58SP/BolaB3qxCmevECDWooJVNyo8P2c2vFMw/orG11BIrx81Y3qRTOx6oEdjvfO+Lq4+gCPbVNVr5gBfdpf/SUS0H53e927nzuKdvqktZQhnkMRpYPaNZixXT6fKjfUwqn6p30r55F2zF00YQpkc3GjXoixMXAzUL3wI8Fjhmp/e+NJx49KD845H9ibmAo+qDzILHla0IoszuFH2T9fbfCBFO4/uRwdx4FeG5+xGGBZUitf10ZMgTeEFDX5RMR8sdIGjnF0VN5lhQspp8/x3o8Pp7kBJy3914oPWa4mcP7AgjXqX8Sn4NMVK0GL0dehe8UbHp0wjTN0B3ZaYvfeUueFTGvtP1Un5JSfXHfyBkLZx3hCWxQsNX8AFcHSCZrC7o1wzb3gUAPSjC27+QeUfh8zDiP0Aj3oEASAot2WyZt2VIGOE+NPXhm43ywTWHtISZ3sIRKtYRT95zEojVeeGOWdo+Qi2Yust3o40RXMsuo3uLOOAsT5DCehPLlbpYDBqq89yYU5B60zpp6mhUG6ST7QcmWXre9WpZ9jGzoucvy/ACmqkaNr3XewsTooVuQ1agrSEvlYUkTPZeG8tM3KaD9CPGGGjXd0I+c=
+python:
+- '3.6'
+services:
+- mongodb
+- rabbitmq
+sudo: required
+branches:
+  only:
+  - staging
+install:
+- pip install .
+- pip install -r requirements.txt
+before_script:
+- chmod a+x merge_script.sh
+- "./merge_script.sh"
+script:
+- pytest
+after_success:
+- chmod a+x pushing_script.sh
+- "./pushing_script.sh"
+- bash <(curl -s https://codecov.io/bash)
+notifications:
+  email:
+    on_success: never
+    on_failure: always
