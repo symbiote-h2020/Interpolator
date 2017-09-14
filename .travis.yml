@@ -13,8 +13,9 @@ branches:
   only:
   - staging
 install:
-- pip install numpy
 - pip install scipy
+- pip install numpy
+- pip install matplotlib
 - pip install pykrige
 before_script:
 - chmod a+x merge_script.sh
