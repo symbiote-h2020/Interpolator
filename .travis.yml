@@ -13,8 +13,9 @@ branches:
   only:
   - staging
 install:
-- pip install .
-- pip install -r requirements.txt
+- pip install numpy
+- pip install scipy
+- pip install pykrige
 before_script:
 - chmod a+x merge_script.sh
 - "./merge_script.sh"
