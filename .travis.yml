@@ -21,7 +21,7 @@ before_script:
 - chmod a+x merge_script.sh
 - "./merge_script.sh"
 script:
-- pytest
+- pytest --help
 after_success:
 - chmod a+x pushing_script.sh
 - "./pushing_script.sh"
