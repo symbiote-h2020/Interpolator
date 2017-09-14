@@ -1,0 +1,20 @@
+{
+   "s1":
+      {
+      "centerLon":1.0,
+      "centerLat":2.0,
+      "comment":"Weg1"
+      },
+   "s2":
+      {
+      "centerLon":1.1,
+      "centerLat":1.9,
+      "comment":"Weg2"
+      },
+   "s3":
+      {
+      "centerLon":1.2,
+      "centerLat":1.8,
+      "comment":"Weg3"
+      }
+}
