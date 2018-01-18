@@ -9,63 +9,12 @@ import os
 
 import json
 
-import SMEUR.Container as Container
-
 from pykrige.ok import OrdinaryKriging
 import numpy as np
         
 
-def object_hook_segments(theDict):
-    if 'centerLon' in theDict:  # It's a ReducedStreetSegment
-        result=Container.ReducedStreetSegment()
-        result.centerLon=theDict["centerLon"]
-        result.centerLat=theDict["centerLat"]
-        result.comment=theDict["comment"]
-        return result
-    
-    return theDict
-    
-
-def object_hook_obs(theDict):
-    if 'latitude' in theDict:  # It's a Location
-        result=Container.Location()
-        result.lon=theDict["longitude"]
-        result.lat=theDict["latitude"]
-        return result
-
-    if 'label' in theDict and 'comment' in theDict and 'symbol' in theDict: # UoM
-        result=Container.UnitOfMeasurement()
-        result.symbol=theDict["symbol"]
-        result.label=theDict["label"]
-        result.comment=theDict["comment"]
-
-    
-    if 'label' in theDict and 'comment' in theDict: # Property
-        result=Container.Property()
-        result.label=theDict["label"]
-        result.comment=theDict["comment"]
-        return result
-
-    if 'value' in theDict and 'obsProperty' in theDict and 'uom' in theDict: # Obervation
-        result=Container.ObservationValue()
-        result.value=theDict["value"]
-        result.obsProperty=theDict["obsProperty"]
-        result.uom=theDict["uom"]
-        return result
-    
-    if 'resourceId' in theDict and 'location' in theDict and 'resultTime' in theDict and 'samplingTime' in theDict and 'obsValues' in theDict:
-        result=Container.Observation()
-        result.resourceId=theDict['resourceId']
-        result.location=theDict['location']
-        result.resultTime=theDict['resultTime']
-        result.samplingTime=theDict['samplingTime']
-        result.obsValues=theDict['obsValues']
-        return result
-    
-    return theDict
-    
-
-
+import SMEUR.Container
+import SMEUR.Utils
 
 def extractObsValuesByProperty(obs):
     '''
@@ -74,20 +23,21 @@ def extractObsValuesByProperty(obs):
     Thus we reorganize the list here
     '''
     
-    result=dict()   # The result will be a dict symbol --> [(Location, ObservationValue)]
+    result=dict()   # The result will be a dict symbol --> [(Location, ObservationValue, uom.label)]
     
     for observation in obs:
         location=observation.location
         
         for obsValue in observation.obsValues:
-            prop=obsValue.obsProperty.label
+            prop=obsValue.obsProperty.name
             if not prop in result:
                 result[prop]=[]
             
-            pair=(location, obsValue.value)
+            pair=(location, obsValue.value, obsValue.uom.symbol)
             result[prop].append(pair)
             
     return result
+
 
 
 def prepareKriging(lon, lat, value):
@@ -109,6 +59,7 @@ def doInterpolationForOneProperty(observations, ssl):
     lon=[]
     lat=[]
     value=[]
+    uom=None
     
     for pair in observations:
         location=pair[0]
@@ -116,9 +67,9 @@ def doInterpolationForOneProperty(observations, ssl):
         lon.append(location.lon)
         lat.append(location.lat)
         value.append(v)
+        if uom is None:
+            uom=pair[2]
         
-        print(pair)
-    
     alon=np.array(lon)
     alat=np.array(lat)
     aval=np.array(value)
@@ -144,7 +95,7 @@ def doInterpolationForOneProperty(observations, ssl):
     for i in range(0, len(idPoints)):
         segmentID=idPoints[i]
         v=interpolated[i]
-        result[segmentID]=v
+        result[segmentID]=(v, uom)
         
     return result
         
@@ -184,19 +135,25 @@ if __name__ == '__main__':
     outFileName=sys.argv[3]
     
     print("reading file "+ sslFileName+" as StreetSegmentList")
-    
     fSSL = open(sslFileName, 'r')
-    ssl=json.load(fSSL, cls=None, object_hook=object_hook_segments, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None)
-    print(ssl)
+    ssl=json.load(fSSL, cls=None, object_hook=SMEUR.Container.object_hook_segments, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None)
+#    print(ssl)
     fSSL.close()
 
+    
+    print("reading file "+ obsFileName+" as Observation list")
     fOBS = open(obsFileName, 'r')
-    obs=json.load(fOBS, cls=None, object_hook=object_hook_obs, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None)
+    obs=json.load(fOBS, cls=None, object_hook=SMEUR.Container.object_hook_obs, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None)
     print(obs)
     fOBS.close()
 
+
+    print("Removing older values");
+    obs=SMEUR.Utils.removeOldObservations(obs)
+
+    print("Re-arranging the observations from sensor centric to property centric")
     obsByProperty=extractObsValuesByProperty(obs)
-    
+    print(obsByProperty)
     
     allInterpolations=doInterpolationForAllPoperties(obsByProperty, ssl)
     
