@@ -6,7 +6,9 @@ Created on 13.09.2017
 This module contains container classes.
 '''
 
-import SMEUR.Utils
+
+import SMEUR.Utils as Utils
+import math
 
 
 class ReducedStreetSegment(object):
@@ -29,6 +31,7 @@ class ReducedStreetSegment(object):
         return result
     
     
+    
 class Location(object):
     def __init__(self):
         self.lat=0.0
@@ -38,7 +41,6 @@ class Location(object):
         result="Location(latitude="+str(self.lat)+", lon="+str(self.lon)+")"
         return result
 
-    
     def __eq__(self, other):
         if self  is other:
             return True
@@ -49,10 +51,10 @@ class Location(object):
         if not isinstance(other, Location):
             return False
         
-        if self.lat!=other.lat:
+        if math.fabs(self.lat-other.lat)>0.000001:
             return False
         
-        if self.lon!=other.lon:
+        if math.fabs(self.lon-other.lon)>0.000001:
             return False
         
         return True
@@ -60,23 +62,27 @@ class Location(object):
 
     def __hash__(self):
         return hash((self.lon, self.lat))
+
+
     
-
-
+    
+        
 class Property(object):
     def __init(self):
-        self.label=None
-        self.comment=None
+        self.name=None
+        self.iri=None
+        self.description=None
+
+
 
     def __repr__(self):
         result="Property("
         result+="name="+self.name+","
+        result+="iri="+self.iri+","
         result+="desc="+str(self.description)
         result+=")"
         return result
 
-    
-    
     def __eq__(self, other):
         if self  is other:
             return True
@@ -100,15 +106,14 @@ class Property(object):
         return hash((self.label, self.comment))
     
 
-    
-    
-    
+
+        
         
 class UnitOfMeasurement(object):
     def __init__(self):
         self.symbol=None
-        self.label=None
-        self.comment=None
+        self.name=None
+        self.description=None
 
     def __repr__(self):
         result="uom("
@@ -119,14 +124,11 @@ class UnitOfMeasurement(object):
         return result
 
 
-        
-
 class ObservationValue(object):
     def __init__(self):
         self.value=0.0
         self.obsProperty=None
         self.uom=None
-
 
     def __repr__(self):
         result="ObsValue("
@@ -139,7 +141,6 @@ class ObservationValue(object):
         return result
 
 
-
 class Observation(object):
     def __init__(self):
         self.resourceId=None
@@ -148,11 +149,9 @@ class Observation(object):
         self.samplingTime=None
         self.obsValues=None
 
-
     def __repr__(self):
         result="Observation(location="+str(self.location)+" time="+str(self.resultTime)+" values="+str(self.obsValues)+")"
         return result
-
 
 
 
@@ -185,6 +184,7 @@ def object_hook_obs(theDict):
     if 'name' in theDict and 'description' in theDict: # Property
         result=Property()
         result.name=theDict["name"]
+        result.iri=theDict["iri"]
         result.description=theDict["description"]
         return result
 
@@ -205,6 +205,7 @@ def object_hook_obs(theDict):
         return result
 
     return theDict
+
 
 
 
